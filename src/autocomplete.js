@@ -1,17 +1,15 @@
 const autocomplete = function() {
   const KEYCODE = { ENTER: 13, ESC: 27, UPARROW: 38, DOWNARROW: 40 };
+  const LEFTBUTTON = 0;
 
   class AutoComplete {
     constructor(config) {
       this.isOpen = false;
       this.selectedIndex = -1;
       this.config = config;
-
       this.minNumChars = 2;
       this.maxDisplayItems = 10;
-
       this.input = document.querySelector(config.input);
-      this.bindEvents(this.$input);
 
       var wrapperElement = document.createElement("div");
       wrapperElement.classList.add("autocomplete__wrapper");
@@ -22,6 +20,7 @@ const autocomplete = function() {
       const suggestions = document.createElement("ul");
       suggestions.classList.add("autocomplete__suggestions", "hidden");
       this.suggestions = this.input.parentNode.insertBefore(suggestions, this.input.nextSibling);
+      this.bindEvents(this.$input);
     }
 
     close() {
@@ -65,6 +64,22 @@ const autocomplete = function() {
       return (num1 % num2 + num2) % num2;
     }
 
+    getSuggestionIndex(elem) {
+      let index = 0;
+      while(elem = elem.previousElementSibling) {
+        index++;
+      }
+      return index;
+    }
+
+    handleSubmit(event, value) {
+      this.input.value = value;
+      if (this.config.handleSubmit) {
+        this.config.handleSubmit(event.value)
+      }
+      this.close();
+    }
+
     setSelectedIndex(index) {
       const newIndex = this.getNextIndex(index, this.suggestions.childNodes.length);
 
@@ -82,6 +97,7 @@ const autocomplete = function() {
       newSelected.setAttribute("aria-selected", true);
 
       this.selectedIndex = newIndex;
+      return newSelected;
     }
 
     handleKeyDown(event) {
@@ -95,7 +111,7 @@ const autocomplete = function() {
         if (!selectedElement || !selectedElement.dataset.val) {
           return;
         }
-        this.config.handleSubmit(event, selectedElement.dataset.val);
+        this.handleSubmit(event, selectedElement.dataset.val);
       } else if (keyCode === KEYCODE.ESC) {
         this.close();
       } else if (keyCode === KEYCODE.UPARROW && this.isOpen) {
@@ -105,11 +121,20 @@ const autocomplete = function() {
       }
     }
 
+    handleClick(event) {
+      if (event.button === LEFTBUTTON) {
+        const newIndex = this.getSuggestionIndex(event.target);
+        const selectedElement = this.setSelectedIndex(newIndex);
+        this.handleSubmit(event, selectedElement.dataset.val);
+      }
+    }
+
     bindEvents() {
       this.input.addEventListener("change", this.evaluate.bind(this));
       this.input.addEventListener("input", this.evaluate.bind(this));
       this.input.addEventListener("keydown", this.handleKeyDown.bind(this));
       this.input.addEventListener("blur", this.close.bind(this));
+      this.suggestions.addEventListener("mousedown", this.handleClick.bind(this));
     }
   }
 
@@ -119,30 +144,3 @@ const autocomplete = function() {
     }
   };
 }();
-
-const endpoint = "https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json";
-
-const cities = [];
-fetch(endpoint)
-  .then(blob => blob.json())
-  .then(data => cities.push(...data));
-
-autocomplete.init({
-  input: ".js-autocomplete",
-  autocompleteSearchFunction: searchTerm => {
-    const suggestions = [];
-    const regex = new RegExp(searchTerm, "gi");
-    cities.forEach(place => {
-      if (place.city.match(regex)) {
-        suggestions.push(place.city);
-      }
-      if (place.state.match(regex)) {
-        suggestions.push(place.state);
-      }
-    });
-    return suggestions;
-  },
-  handleSubmit: (e, value) => {
-    console.log(e, value);
-  }
-});
