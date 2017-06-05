@@ -10,23 +10,45 @@ const autocomplete = function() {
       this.minNumChars = 2;
       this.maxDisplayItems = 10;
       this.input = document.querySelector(config.input);
+      this.input.setAttribute("aria-autocomplete", "list");
 
-      var wrapperElement = document.createElement("div");
+      // Create wrapper around input
+      let wrapperElement = document.createElement("div");
       wrapperElement.classList.add("autocomplete__wrapper");
       this.input.parentNode.replaceChild(wrapperElement, this.input);
-      this.input.setAttribute("aria-autocomplete", "list");
-      wrapperElement.appendChild(this.input);
 
+      // Create helptext
+      let helpText = document.createElement("span");
+      helpText.setAttribute("role", "status")
+      helpText.setAttribute("aria-live", "polite")
+      helpText.classList.add("autocomplete__help");
+      this.helpText = helpText;
+
+      // Create suggestions
       const suggestions = document.createElement("ul");
       suggestions.classList.add("autocomplete__suggestions", "hidden");
+      suggestions.setAttribute("tabindex", 0);
+
+      wrapperElement.appendChild(helpText)
+      wrapperElement.appendChild(this.input);
       this.suggestions = this.input.parentNode.insertBefore(suggestions, this.input.nextSibling);
       this.bindEvents(this.$input);
+    }
+
+    cleanupSuggestionByIndex(index) {
+      const oldSelected = this.suggestions.childNodes[index];
+
+      if (!oldSelected || index === -1) {
+        return
+      }
+      oldSelected.classList.remove("selected");
     }
 
     close() {
       if (this.isOpen) {
         this.suggestions.classList.add("hidden");
         this.isOpen = false;
+        this.cleanupSuggestionByIndex(this.selectedIndex);
         this.selectedIndex = -1;
       }
     }
@@ -39,8 +61,13 @@ const autocomplete = function() {
       }
     }
 
-    getAutoCompleteListItemHtml(autoCompleteOption) {
-      return `<li class="autocomplete__suggestion" aria-selected="false" data-val="${autoCompleteOption}">${autoCompleteOption}</li>`;
+    setHelpText(numberOfSuggestions) {
+      const helpText = `There are ${numberOfSuggestions} suggestions available. Use up and down arrow to navigate.`;
+      this.helpText.textContent = helpText;
+    }
+
+    getAutoCompleteListItemHtml(autoCompleteOption, index) {
+      return `<li class="autocomplete__suggestion" id="autocomplete__suggestion_${index}" tabindex="-1" data-val="${autoCompleteOption}">${autoCompleteOption}</li>`;
     }
 
     evaluate(event) {
@@ -52,8 +79,9 @@ const autocomplete = function() {
       const autocompleteOptions = this.config.autocompleteSearchFunction(currentSearchTerm);
       if (autocompleteOptions) {
         const slicedAutoCompleteOptions = autocompleteOptions.slice(0, this.maxDisplayItems);
-        const autoCompleteOptionsHtml = slicedAutoCompleteOptions.map(this.getAutoCompleteListItemHtml).join("");
+        const autoCompleteOptionsHtml = slicedAutoCompleteOptions.map((elem, index) => this.getAutoCompleteListItemHtml(elem, index)).join("");
         this.suggestions.innerHTML = autoCompleteOptionsHtml;
+        this.setHelpText(slicedAutoCompleteOptions.length)
         this.open();
       } else {
         this.close();
@@ -77,24 +105,22 @@ const autocomplete = function() {
       if (this.config.handleSubmit) {
         this.config.handleSubmit(event.value)
       }
+      this.setHelpText(1);
       this.close();
     }
 
-    setSelectedIndex(index) {
+    setSelectedByIndex(index) {
       const newIndex = this.getNextIndex(index, this.suggestions.childNodes.length);
-
       if (this.suggestions.childNodes.length === 0) {
+        this.suggestions.setAttribute("aria-activedescendant", "");
         return;
       }
-
-      if (this.selectedIndex != -1 && this.suggestions.childNodes[this.selectedIndex]) {
-        const oldSelected = this.suggestions.childNodes[this.selectedIndex];
-        oldSelected.classList.remove("selected");
-        oldSelected.setAttribute("aria-selected", false);
-      }
+      this.cleanupSuggestionByIndex(this.selectedIndex);
       const newSelected = this.suggestions.childNodes[newIndex];
       newSelected.classList.add("selected");
-      newSelected.setAttribute("aria-selected", true);
+      this.suggestions.setAttribute("aria-activedescendant", `autocomplete__suggestion_${index}`);
+      // Not sure if we'd want this
+      // this.input.value = newSelected.dataset.val;
 
       this.selectedIndex = newIndex;
       return newSelected;
@@ -114,17 +140,19 @@ const autocomplete = function() {
         this.handleSubmit(event, selectedElement.dataset.val);
       } else if (keyCode === KEYCODE.ESC) {
         this.close();
-      } else if (keyCode === KEYCODE.UPARROW && this.isOpen) {
-        this.setSelectedIndex(this.selectedIndex - 1);
-      } else if (keyCode === KEYCODE.DOWNARROW && this.isOpen) {
-        this.setSelectedIndex(this.selectedIndex + 1);
+      } else if (keyCode === KEYCODE.UPARROW) {
+        this.open();
+        this.setSelectedByIndex(this.selectedIndex - 1);
+      } else if (keyCode === KEYCODE.DOWNARROW) {
+        this.open();
+        this.setSelectedByIndex(this.selectedIndex + 1);
       }
     }
 
     handleClick(event) {
       if (event.button === LEFTBUTTON) {
         const newIndex = this.getSuggestionIndex(event.target);
-        const selectedElement = this.setSelectedIndex(newIndex);
+        const selectedElement = this.setSelectedByIndex(newIndex);
         this.handleSubmit(event, selectedElement.dataset.val);
       }
     }

@@ -1,5 +1,7 @@
 # Custom
 dist/*
+autocomplete.sublime-project
+autocomplete.sublime-workspace
 
 # Created by https://www.gitignore.io/api/osx,node,sublimetext
 ### Node ###
