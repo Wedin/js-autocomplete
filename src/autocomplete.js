@@ -10,26 +10,26 @@ const autocomplete = function() {
       this.minNumChars = 2;
       this.maxDisplayItems = 10;
       this.input = document.querySelector(config.input);
-      this.input.setAttribute("aria-autocomplete", "list");
+      this.input.setAttribute('aria-autocomplete', 'list');
 
       // Create wrapper around input
-      let wrapperElement = document.createElement("div");
-      wrapperElement.classList.add("autocomplete__wrapper");
+      let wrapperElement = document.createElement('div');
+      wrapperElement.classList.add('autocomplete__wrapper');
       this.input.parentNode.replaceChild(wrapperElement, this.input);
 
       // Create helptext
-      let helpText = document.createElement("span");
-      helpText.setAttribute("role", "status")
-      helpText.setAttribute("aria-live", "polite")
-      helpText.classList.add("autocomplete__help");
+      let helpText = document.createElement('span');
+      helpText.setAttribute('role', 'status');
+      helpText.setAttribute('aria-live', 'polite');
+      helpText.classList.add('autocomplete__help');
       this.helpText = helpText;
 
       // Create suggestions
-      const suggestions = document.createElement("ul");
-      suggestions.classList.add("autocomplete__suggestions", "hidden");
-      suggestions.setAttribute("tabindex", 0);
+      const suggestions = document.createElement('ul');
+      suggestions.classList.add('autocomplete__suggestions', 'hidden');
+      suggestions.setAttribute('tabindex', 0);
 
-      wrapperElement.appendChild(helpText)
+      wrapperElement.appendChild(helpText);
       wrapperElement.appendChild(this.input);
       this.suggestions = this.input.parentNode.insertBefore(suggestions, this.input.nextSibling);
       this.bindEvents(this.$input);
@@ -39,14 +39,14 @@ const autocomplete = function() {
       const oldSelected = this.suggestions.childNodes[index];
 
       if (!oldSelected || index === -1) {
-        return
+        return;
       }
-      oldSelected.classList.remove("selected");
+      oldSelected.classList.remove('selected');
     }
 
     close() {
       if (this.isOpen) {
-        this.suggestions.classList.add("hidden");
+        this.suggestions.classList.add('hidden');
         this.isOpen = false;
         this.cleanupSuggestionByIndex(this.selectedIndex);
         this.selectedIndex = -1;
@@ -55,7 +55,7 @@ const autocomplete = function() {
 
     open() {
       if (!this.isOpen) {
-        this.suggestions.classList.remove("hidden");
+        this.suggestions.classList.remove('hidden');
         this.isOpen = true;
         this.selectedIndex = -1;
       }
@@ -79,9 +79,11 @@ const autocomplete = function() {
       const autocompleteOptions = this.config.autocompleteSearchFunction(currentSearchTerm);
       if (autocompleteOptions) {
         const slicedAutoCompleteOptions = autocompleteOptions.slice(0, this.maxDisplayItems);
-        const autoCompleteOptionsHtml = slicedAutoCompleteOptions.map((elem, index) => this.getAutoCompleteListItemHtml(elem, index)).join("");
+        const autoCompleteOptionsHtml = slicedAutoCompleteOptions
+          .map((elem, index) => this.getAutoCompleteListItemHtml(elem, index))
+          .join('');
         this.suggestions.innerHTML = autoCompleteOptionsHtml;
-        this.setHelpText(slicedAutoCompleteOptions.length)
+        this.setHelpText(slicedAutoCompleteOptions.length);
         this.open();
       } else {
         this.close();
@@ -94,7 +96,7 @@ const autocomplete = function() {
 
     getSuggestionIndex(elem) {
       let index = 0;
-      while(elem = elem.previousElementSibling) {
+      while (elem = elem.previousElementSibling) {
         index++;
       }
       return index;
@@ -103,7 +105,7 @@ const autocomplete = function() {
     handleSubmit(event, value) {
       this.input.value = value;
       if (this.config.handleSubmit) {
-        this.config.handleSubmit(event.value)
+        this.config.handleSubmit(event.value);
       }
       this.setHelpText(1);
       this.close();
@@ -112,16 +114,15 @@ const autocomplete = function() {
     setSelectedByIndex(index) {
       const newIndex = this.getNextIndex(index, this.suggestions.childNodes.length);
       if (this.suggestions.childNodes.length === 0) {
-        this.suggestions.setAttribute("aria-activedescendant", "");
+        this.suggestions.setAttribute('aria-activedescendant', '');
         return;
       }
       this.cleanupSuggestionByIndex(this.selectedIndex);
       const newSelected = this.suggestions.childNodes[newIndex];
-      newSelected.classList.add("selected");
-      this.suggestions.setAttribute("aria-activedescendant", `autocomplete__suggestion_${index}`);
+      newSelected.classList.add('selected');
+      this.suggestions.setAttribute('aria-activedescendant', `autocomplete__suggestion_${index}`);
       // Not sure if we'd want this
       // this.input.value = newSelected.dataset.val;
-
       this.selectedIndex = newIndex;
       return newSelected;
     }
@@ -158,17 +159,17 @@ const autocomplete = function() {
     }
 
     bindEvents() {
-      this.input.addEventListener("change", this.evaluate.bind(this));
-      this.input.addEventListener("input", this.evaluate.bind(this));
-      this.input.addEventListener("keydown", this.handleKeyDown.bind(this));
-      this.input.addEventListener("blur", this.close.bind(this));
-      this.suggestions.addEventListener("mousedown", this.handleClick.bind(this));
+      this.input.addEventListener('change', this.evaluate.bind(this));
+      this.input.addEventListener('input', this.evaluate.bind(this));
+      this.input.addEventListener('keydown', this.handleKeyDown.bind(this));
+      this.input.addEventListener('blur', this.close.bind(this));
+      this.suggestions.addEventListener('mousedown', this.handleClick.bind(this));
     }
   }
 
   return {
     init: config => {
       new AutoComplete(config);
-    }
+    },
   };
 }();
