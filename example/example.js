@@ -1,8 +1,8 @@
-/* global Trianglify, autocomplete */
+/* global Trianglify, autocomplete, screen */
 (() => {
   var pattern = Trianglify({
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: screen.width,
+    height: screen.height,
     x_colors: [
       '#8e0152',
       '#c51b7d',

@@ -1,4 +1,4 @@
-const autocomplete = function() {
+const autocomplete = (() => {
   const KEYCODE = { ENTER: 13, ESC: 27, UPARROW: 38, DOWNARROW: 40 };
   const LEFTBUTTON = 0;
 
@@ -61,7 +61,7 @@ const autocomplete = function() {
       }
     }
 
-    setHelpText(numberOfSuggestions) {
+    setHelpTextFromNumberSuggestions(numberOfSuggestions) {
       const helpText = `There are ${numberOfSuggestions} suggestions available. Use up and down arrow to navigate.`;
       this.helpText.textContent = helpText;
     }
@@ -73,6 +73,8 @@ const autocomplete = function() {
     evaluate(event) {
       const currentSearchTerm = event.target.value;
       if (currentSearchTerm.length < this.minNumChars) {
+        this.suggestions.innerHTML = '';
+        this.setHelpTextFromNumberSuggestions(0);
         this.close();
         return;
       }
@@ -83,7 +85,7 @@ const autocomplete = function() {
           .map((elem, index) => this.getAutoCompleteListItemHtml(elem, index))
           .join('');
         this.suggestions.innerHTML = autoCompleteOptionsHtml;
-        this.setHelpText(slicedAutoCompleteOptions.length);
+        this.setHelpTextFromNumberSuggestions(slicedAutoCompleteOptions.length);
         this.open();
       } else {
         this.close();
@@ -107,7 +109,6 @@ const autocomplete = function() {
       if (this.config.handleSubmit) {
         this.config.handleSubmit(event.value);
       }
-      this.setHelpText(1);
       this.close();
     }
 
@@ -121,8 +122,6 @@ const autocomplete = function() {
       const newSelected = this.suggestions.childNodes[newIndex];
       newSelected.classList.add('selected');
       this.suggestions.setAttribute('aria-activedescendant', `autocomplete__suggestion_${index}`);
-      // Not sure if we'd want this
-      // this.input.value = newSelected.dataset.val;
       this.selectedIndex = newIndex;
       return newSelected;
     }
@@ -172,4 +171,4 @@ const autocomplete = function() {
       new AutoComplete(config);
     },
   };
-}();
+})();

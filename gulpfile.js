@@ -24,7 +24,9 @@ gulp.task('serve', [ 'sass', 'scripts', 'copy-static', 'example' ], function() {
 
   gulp.watch(config.scssSrc, [ 'sass' ]).on('change', browserSync.reload);
   gulp.watch(config.jsSrc, [ 'scripts' ]).on('change', browserSync.reload);
-  gulp.watch(config.htmlSrc).on('change', browserSync.reload);
+  gulp.watch(config.exampleScss, [ 'example-sass' ]).on('change', browserSync.reload);
+  gulp.watch(config.exampleJs, [ 'example-scripts' ]).on('change', browserSync.reload);
+  gulp.watch(config.exampleStaticSrc).on('change', browserSync.reload);
 });
 
 gulp.task('scripts', cb => {
