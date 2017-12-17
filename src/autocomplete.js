@@ -12,6 +12,8 @@ const autocomplete = (() => {
       this.input = document.querySelector(config.input);
       this.input.setAttribute('aria-autocomplete', 'list');
 
+      this.displayFunction = this.config.displayFunction ? this.config.displayFunction : item => item;
+
       // Create wrapper around input
       let wrapperElement = document.createElement('div');
       wrapperElement.classList.add('autocomplete__wrapper');
@@ -50,6 +52,7 @@ const autocomplete = (() => {
         this.isOpen = false;
         this.cleanupSuggestionByIndex(this.selectedIndex);
         this.selectedIndex = -1;
+        this.suggestions.innerHTML = '';
       }
     }
 
@@ -67,7 +70,9 @@ const autocomplete = (() => {
     }
 
     getAutoCompleteListItemHtml(autoCompleteOption, index) {
-      return `<li class="autocomplete__suggestion" id="autocomplete__suggestion_${index}" tabindex="-1" data-val="${autoCompleteOption}">${autoCompleteOption}</li>`;
+      return `<li class="autocomplete__suggestion" id="autocomplete__suggestion_${index}" tabindex="-1">${this.displayFunction(
+        autoCompleteOption
+      )}</li>`;
     }
 
     evaluate(event) {
@@ -98,7 +103,7 @@ const autocomplete = (() => {
 
     getSuggestionIndex(elem) {
       let index = 0;
-      while (elem = elem.previousElementSibling) {
+      while ((elem = elem.previousElementSibling)) {
         index++;
       }
       return index;
@@ -107,7 +112,7 @@ const autocomplete = (() => {
     handleSubmit(event, value) {
       this.input.value = value;
       if (this.config.handleSubmit) {
-        this.config.handleSubmit(event.value);
+        this.config.handleSubmit(value);
       }
       this.close();
     }
@@ -134,10 +139,10 @@ const autocomplete = (() => {
           return;
         }
         const selectedElement = this.suggestions.childNodes[this.selectedIndex];
-        if (!selectedElement || !selectedElement.dataset.val) {
+        if (!selectedElement) {
           return;
         }
-        this.handleSubmit(event, selectedElement.dataset.val);
+        this.handleSubmit(event, selectedElement.textContent);
       } else if (keyCode === KEYCODE.ESC) {
         this.close();
       } else if (keyCode === KEYCODE.UPARROW) {
@@ -153,7 +158,7 @@ const autocomplete = (() => {
       if (event.button === LEFTBUTTON) {
         const newIndex = this.getSuggestionIndex(event.target);
         const selectedElement = this.setSelectedByIndex(newIndex);
-        this.handleSubmit(event, selectedElement.dataset.val);
+        this.handleSubmit(event, selectedElement.textContent);
       }
     }
 
